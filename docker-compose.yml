@@ -1,0 +1,102 @@
+version: '2'
+services:
+  myapp:
+    restart: always
+    dns: [172.16.3.3]
+    build:
+      context: .
+      dockerfile: Dockerfile
+    expose:
+      - 80
+    volumes:
+      - ./html:/var/www/
+    environment:
+      VIRTUAL_HOST: "whoami.local"
+      XDEBUG_CONFIG: "remote_host=172.16.3.6 remote_port=9001"
+      PHP_IDE_CONFIG: "serverName=172.18.0.2"
+    #use default bridge network
+#    network_mode: bridge
+    networks:
+      vpcbr:
+        ipv4_address: 172.20.0.2
+
+
+
+#    ports:
+#      - "80:80"
+#    networks:
+#      - dockernet
+#networks:
+#  dockernet:
+#    external: true
+#
+  postgres:
+      restart: always
+      #image: sameersbn/postgresql:9.6-2
+      build:
+        context: db
+        dockerfile: Dockerfile.samersbn
+  #    ports:
+  #      - "5432:5432"
+      environment:
+        - DEBUG=false
+
+        - DB_USER=dev
+        - DB_PASS=dev
+        - DB_NAME=new
+        - DB_TEMPLATE=
+
+#        - DB_EXTENSION=
+#
+#        - REPLICATION_MODE=
+#        - REPLICATION_USER=
+#        - REPLICATION_PASS=
+#        - REPLICATION_SSLMODE=
+      volumes:
+        - ./db/postgresql:/var/lib/postgresql
+      #use default bridge network
+#      network_mode: bridge
+      networks:
+        vpcbr:
+          ipv4_address: 172.20.0.3
+
+#-use static ip on static network
+#      networks:
+#        mynet:
+#          ipv4_address: 172.25.0.101
+##      dns: [172.16.3.3 8.8.8.8]
+#networks:
+#  mynet:
+#    driver: bridge
+#    ipam:
+#      config:
+#      - subnet: 172.25.0.0/24
+
+
+#  nginx-proxy:
+#    restart: always
+#    image: jwilder/nginx-proxy
+#    ports:
+#      - "80:80"
+#    volumes:
+#      - /var/run/docker.sock:/tmp/docker.sock
+##      - proxy.conf:/etc/nginx/proxy.conf
+
+
+  pgadmin4:
+    restart: always
+    build:
+      context: dockercloud-pgadmin4
+      dockerfile: Dockerfile
+    networks:
+      vpcbr:
+        ipv4_address: 172.20.0.4
+
+#static network
+networks:
+  vpcbr:
+    driver: bridge
+    ipam:
+     config:
+       - subnet: 172.20.0.0/16
+         gateway: 172.20.0.1
